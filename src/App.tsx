@@ -15,8 +15,8 @@ function App () {
   }
 
   const toggleSortByCountry = () => {
-    const newsortingValue = sorting === SortBy.NONE ? SortBy.COUNTRY : SortBy.NONE
-    setSorting(newsortingValue)
+    const newSortingValue = sorting === SortBy.NONE ? SortBy.COUNTRY : SortBy.NONE
+    setSorting(newSortingValue)
   }
 
   const handleDelete = (uuid: string) => {
