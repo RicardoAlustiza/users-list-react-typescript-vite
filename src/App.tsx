@@ -8,6 +8,9 @@ function App () {
   const [showColors, setShowColors] = useState(false)
   const [sorting, setSorting] = useState<SortBy>(SortBy.NONE)
   const [filterCountry, setFilterCountry] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(false)
+
   const originalUsers = useRef<User[]>([]) /* Guardar un valor que se comparte entre renders pero que al cambiar, no vuelva a rednerizar el componente */
 
   const toggleColors = () => {
@@ -33,14 +36,26 @@ function App () {
   }
 
   useEffect(() => {
-    fetch('https://randomuser.me/api?results=100')
-      .then(async res => await res.json())
+    setLoading(true)
+    setError(false)
+
+    fetch('https://randomuser.me/api?results=10')
+      .then(async res => {
+        console.log(res.ok, res.status, res.statusText)
+
+        if (!res.ok) throw new Error('Error en la petición')
+        return await res.json()
+      })
       .then(res => {
         setUsers(res.results)
         originalUsers.current = res.results
       })
       .catch(err => {
         console.error(err)
+        setError(err)
+      })
+      .finally(() => {
+        setLoading(false)
       })
   }, [])
 
@@ -78,7 +93,12 @@ function App () {
         }}/>
       </header>
       <main>
-        <UsersListComponent users={sortedUsers} showColors={showColors} deleteUser={handleDelete} changeSorting={handleChangeSort}/>
+        { loading && <p>Cargando...</p> }
+        { !loading && error && <p>Ha habido un error</p> }
+        { !loading && !error && users.length === 0 && <p>No hay usuarios</p> }
+        { !loading && !error && users.length > 0 &&
+          <UsersListComponent users={sortedUsers} showColors={showColors} deleteUser={handleDelete} changeSorting={handleChangeSort}/>
+        }
       </main>
     </div>
   )
