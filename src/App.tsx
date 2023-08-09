@@ -3,6 +3,19 @@ import './App.css'
 import { SortBy, type User } from './types.d'
 import { UsersListComponent } from './components/UsersListComponent'
 
+const fetchUsers = async (page: number) => {
+  return (
+    await fetch(`https://randomuser.me/api?results=10&seed=ricks&page=${page}`)
+      .then(async res => {
+        console.log(res.ok, res.status, res.statusText)
+
+        if (!res.ok) throw new Error('Error en la petición')
+        return await res.json()
+      })
+      .then(res => res.results)
+  )
+}
+
 function App () {
   const [users, setUsers] = useState<User[]>([])
   const [showColors, setShowColors] = useState(false)
@@ -40,16 +53,13 @@ function App () {
     setLoading(true)
     setError(false)
 
-    fetch(`https://randomuser.me/api?results=10&seed=ricks&page=${currentPage}`)
-      .then(async res => {
-        console.log(res.ok, res.status, res.statusText)
-
-        if (!res.ok) throw new Error('Error en la petición')
-        return await res.json()
-      })
-      .then(res => {
-        setUsers(prevUsers => prevUsers.concat(res.results))
-        originalUsers.current = res.results
+    fetchUsers(currentPage)
+      .then(users => {
+        setUsers(prevUsers => {
+          const newUsers = prevUsers.concat(users)
+          originalUsers.current = newUsers
+          return newUsers
+        })
       })
       .catch(err => {
         console.error(err)
@@ -98,7 +108,7 @@ function App () {
           <UsersListComponent users={sortedUsers} showColors={showColors} deleteUser={handleDelete} changeSorting={handleChangeSort}/>
         }
         { loading && <p>Cargando...</p> }
-        { !loading && error && <p>Ha habido un error</p> }
+        { error && <p>Ha habido un error</p> }
         { !loading && !error && users.length === 0 && <p>No hay usuarios</p> }
         { !loading && !error &&
           <button onClick={() => { setCurrentPage(currentPage + 1) }}>Cargar más resultados</button>
