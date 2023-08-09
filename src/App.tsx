@@ -10,6 +10,7 @@ function App () {
   const [filterCountry, setFilterCountry] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
 
   const originalUsers = useRef<User[]>([]) /* Guardar un valor que se comparte entre renders pero que al cambiar, no vuelva a rednerizar el componente */
 
@@ -39,7 +40,7 @@ function App () {
     setLoading(true)
     setError(false)
 
-    fetch('https://randomuser.me/api?results=10')
+    fetch(`https://randomuser.me/api?results=10&seed=ricks&page=${currentPage}`)
       .then(async res => {
         console.log(res.ok, res.status, res.statusText)
 
@@ -47,7 +48,7 @@ function App () {
         return await res.json()
       })
       .then(res => {
-        setUsers(res.results)
+        setUsers(prevUsers => prevUsers.concat(res.results))
         originalUsers.current = res.results
       })
       .catch(err => {
@@ -57,7 +58,7 @@ function App () {
       .finally(() => {
         setLoading(false)
       })
-  }, [])
+  }, [currentPage])
 
   const filteredUsers = useMemo(() => {
     return filterCountry != null && filterCountry.length > 0
@@ -93,11 +94,14 @@ function App () {
         }}/>
       </header>
       <main>
+        { users.length > 0 &&
+          <UsersListComponent users={sortedUsers} showColors={showColors} deleteUser={handleDelete} changeSorting={handleChangeSort}/>
+        }
         { loading && <p>Cargando...</p> }
         { !loading && error && <p>Ha habido un error</p> }
         { !loading && !error && users.length === 0 && <p>No hay usuarios</p> }
-        { !loading && !error && users.length > 0 &&
-          <UsersListComponent users={sortedUsers} showColors={showColors} deleteUser={handleDelete} changeSorting={handleChangeSort}/>
+        { !loading && !error &&
+          <button onClick={() => { setCurrentPage(currentPage + 1) }}>Cargar más resultados</button>
         }
       </main>
     </div>
